@@ -1,0 +1,361 @@
+#Importing the basic libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+#Import the Data
+import os
+os.getcwd()
+os.chdir('F:\Project\Python Project - Bank Lending-20190227T152546Z-001\Python Project - Bank Lending')
+
+Data= pd.read_csv('XYZCorp_LendingData.txt',delimiter='\t')
+#Data.to_csv('XYZCorp_LendingData.csv') # to save the data file to csv file
+#Data.to_excel('XYZCorp_LendingData.xlsx')# To save the data file in excel format
+
+#Understanding the Data
+Data.head()
+Data.columns
+Data.shape
+Data.size
+#let's copy the Data to keep original Data intackted
+DataFrame=Data.copy()
+# Copied Data name as DataFrame
+DataFrame.head()
+DataFrame.columns
+DataFrame.shape
+DataFrame.size
+
+#checking NA values
+Data.isnull().sum()
+
+# getting the data in where the data is missing more then 75%
+
+null_value=DataFrame.isnull().sum()/len(DataFrame)
+missing_features = null_value[null_value > 0.75]
+plt.figure(figsize=(20,5))
+missing_features.plot(kind='bar')
+plt.title('List of columns and NA counts where na values more than 75%')
+plt.show()
+
+# directly Dropping those variables which has the more then 75% data is missing 
+
+missing_features = null_value[null_value > 0.75].index
+DataFrame.drop(missing_features, axis=1, inplace=True)
+DataFrame.head()
+DataFrame.shape
+
+DataFrame.isnull().sum()
+DataFrame.dtypes
+#############################################
+#finding the correlation between the variables using HeatMap
+##################################3
+import seaborn as sns 
+import matplotlib.pyplot as plt 
+from scipy.stats import norm 
+
+plt.figure(figsize=(30,30))
+sns.heatmap(DataFrame.corr(),cmap='coolwarm')
+plot.show()
+
+#Correlation between variables
+DataFrame.corr()
+##############################
+#univariate analysis for finding coorelation
+###########################
+#numerical predictors
+numeric_features = DataFrame.select_dtypes(include=[np.number])
+numeric_features.dtypes
+
+
+#correlation =numeric_features.corr()
+#print(correlation['default_ind'])
+#
+#print(correlation['acc_now_delinq'])
+
+
+
+
+#Categorical predictors
+#for categorical we use Bar graphs
+DataFrame.dtypes
+categ_features= DataFrame.select_dtypes(object)
+categ_features.dtypes
+#sns.countplot(DataFrame.term)
+##plt.xticks(rotation=90)
+#sns.countplot(DataFrame.sub_grade)
+#plt.xticks(rotation=90)
+#sns.countplot(DataFrame.emp_title)
+#sns.countplot(DataFrame.emp_length)
+#sns.countplot(DataFrame.home_ownership )
+#sns.countplot(DataFrame.verification_status)
+#sns.countplot(DataFrame.issue_d)
+#sns.countplot(DataFrame.pymnt_plan)
+#sns.countplot(DataFrame.purpose)
+#sns.countplot(DataFrame.title)
+#sns.countplot(DataFrame.zip_code)
+#sns.countplot(DataFrame.addr_state)
+#sns.countplot(DataFrame.earliest_cr_line)
+#sns.countplot(DataFrame.initial_list_status)
+#sns.countplot(DataFrame.last_pymnt_d)
+#sns.countplot(DataFrame.next_pymnt_d)
+#sns.countplot(DataFrame.last_credit_pull_d)
+#sns.countplot(DataFrame.application_type)
+
+
+###############
+#Bi-variant analysis
+##################
+
+#understand the relationship between our target variable and predictors
+# as well as the relationship among predictors
+
+
+###Numerical variables
+
+numeric_features = DataFrame.select_dtypes(include=[np.number])
+numeric_features.dtypes
+
+
+plt.xlabel("loan_amnt")
+plt.ylabel("default_ind")
+plt.title("loan_amnt and default_ind ")
+plt.plot(DataFrame.loan_amnt,DataFrame["default_ind"],'.', alpha = 0.3)
+
+
+plt.xlabel("funded_amnt")
+plt.ylabel("default_ind")
+plt.title("funded_amnt and default_ind ")
+plt.plot(DataFrame.funded_amnt,DataFrame["default_ind"],'.', alpha = 0.3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Correlation between variables
+DataFrame.corr()
+
+
+#drop the columns which are not coorelated
+
+DataFrame.drop(['id','member_id','emp_title','title','last_pymnt_d','next_pymnt_d','last_credit_pull_d',
+         'addr_state','earliest_cr_line','zip_code', 'mths_since_last_delinq', 'policy_code'] ,axis=1, inplace=True)
+DataFrame.shape
+
+#Replacing the term and removing unnecessary charaters
+
+DataFrame['term'] = DataFrame['term'].replace({'months':'',' ':''},regex = True)
+#Replacing the emp_length and removing unnecessary charaters
+
+DataFrame['emp_length'] = DataFrame['emp_length'].replace({'years':'','year':'',' ':'','<':'','\+':'','n/a':'0','s':''},regex = True)
+#Converting both term and emp_lenght to numeric values 
+
+DataFrame['emp_length'] = pd.to_numeric(DataFrame['emp_length'], errors = 'coerce')
+DataFrame['term'] = pd.to_numeric(DataFrame['term'], errors = 'coerce')
+DataFrame.dtypes
+
+#################################
+#Exploratory Data Analysis
+####################################
+import seaborn as sns
+#loan amount
+fig, ax = plt.subplots(1, 3, figsize=(16,5))
+
+sns.distplot(DataFrame['loan_amnt'], ax=ax[0])
+ax[0].set_title('distplot', fontsize=14)
+sns.violinplot(DataFrame['loan_amnt'], ax=ax[1])
+ax[0].set_title('Violinplot', fontsize=14)
+sns.boxplot(DataFrame['loan_amnt'], ax=ax[2], orient='v')
+ax[0].set_title('Boxplot', fontsize=14)
+
+#defaulters are customers who have term as 36 months
+
+sns.countplot('default_ind',data=DataFrame,hue='term')
+
+#defaulters are customers who's home ownership type is Rent or Mortgage
+
+sns.countplot('default_ind',data=DataFrame,hue='home_ownership')
+
+#purpose of loan
+ax = sns.catplot(x='purpose',kind='count',data=DataFrame,orient="h")
+plt.xticks(rotation=90)
+
+#purpose of Loan with default_ind
+
+
+#Home ownership wise Loan
+plt.figure(figsize=(15,5))
+ax = sns.countplot(DataFrame['home_ownership'], hue=DataFrame['default_ind'], order=DataFrame['home_ownership'].value_counts().index)
+plt.xticks(rotation=90)
+plt.show()
+
+#count of Defaulters
+sns.countplot(DataFrame['default_ind'])
+
+#checking null values
+null_col=DataFrame.columns[DataFrame.isnull().any()]
+x= DataFrame[null_col].isnull().sum()
+x
+
+# After idnetifying the missing values implemention mean for the variables
+x.dtypes
+DataFrame['revol_util'].describe()
+DataFrame['revol_util'].fillna(DataFrame['revol_util'].mean(), inplace=True)
+DataFrame['emp_length'].describe()
+DataFrame['emp_length'].fillna(DataFrame['emp_length'].mean(), inplace=True)
+DataFrame['collections_12_mths_ex_med'].describe()
+DataFrame['collections_12_mths_ex_med'].fillna(DataFrame['collections_12_mths_ex_med'].mean(), inplace=True)
+DataFrame['tot_coll_amt'].describe()
+DataFrame['tot_coll_amt'].fillna(DataFrame['tot_coll_amt'].mean(), inplace=True)
+DataFrame['tot_cur_bal'].describe()
+DataFrame['tot_cur_bal'].fillna(DataFrame['tot_cur_bal'].mean(), inplace=True)
+DataFrame['total_rev_hi_lim'].describe()
+DataFrame['total_rev_hi_lim'].fillna(DataFrame['total_rev_hi_lim'].mean(), inplace=True)
+
+DataFrame.isnull().sum()
+
+# Importing the lable encoder to make some encoding for the object values 
+
+from sklearn import preprocessing
+label_encoder = preprocessing.LabelEncoder()
+DataFrame['grade']= label_encoder.fit_transform(DataFrame['grade'])
+DataFrame['grade'].unique()
+DataFrame['sub_grade']= label_encoder.fit_transform(DataFrame['sub_grade'])
+DataFrame['sub_grade'].unique()
+
+DataFrame['initial_list_status']= label_encoder.fit_transform(DataFrame['initial_list_status'])
+DataFrame['initial_list_status'].unique()
+DataFrame['pymnt_plan']= label_encoder.fit_transform(DataFrame['pymnt_plan'])
+DataFrame['pymnt_plan'].unique()
+DataFrame['application_type']= label_encoder.fit_transform(DataFrame['application_type'])
+DataFrame['application_type'].unique()
+DataFrame[DataFrame.columns[DataFrame.isnull().any()]].isnull().sum()
+DataFrame.dtypes
+
+# since the issue date in data is in object format split the string and and getting the actual value in a new set of columns
+
+DataFrame['str_split'] = DataFrame.issue_d.str.split('-')
+DataFrame['issue'] = DataFrame.str_split.str.get(0)
+DataFrame['d']=DataFrame.str_split.str.get(1)
+
+# from the new columns from the issue date replace the string value to numeric value
+
+DataFrame['issue'] = DataFrame['issue'].replace({'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'},regex = True)
+
+# creating a new column called period by adding d and issue from the issue date that we earlier created 
+
+DataFrame["period"] = DataFrame["d"].map(str) + DataFrame["issue"]
+DataFrame = DataFrame.sort_values('period')
+# Reseting the index as the period 
+
+DataFrame = DataFrame.set_index('period')
+
+# since the period we have found out dropping th below columns 
+
+DataFrame.drop(['issue_d','str_split','issue','d'], axis=1, inplace=True)
+DataFrame.info()
+DataFrame.head()
+DataFrame.columns
+#creating Dummies for Categ variabels
+dummies = DataFrame[['home_ownership','verification_status','purpose']]
+dummies.head()
+# dummyfing the data frame
+DataFrame1 = pd.get_dummies(dummies,drop_first=True)
+DataFrame1.head()
+
+#concat the Dummmies with DataFrame
+DataFrame=pd.concat([DataFrame,DataFrame1],axis=1)
+DataFrame.head()
+# Dropping the object data has it got dummified
+
+DataFrame.drop(['home_ownership','verification_status','purpose'], axis=1, inplace=True)
+DataFrame.shape
+DataFrame.size
+#setting the test and train according to given statement
+
+Train = DataFrame.loc['200706':'201505',:]
+Test = DataFrame.loc['201506':'201512',:]
+print(Train.shape)
+print(Test.shape)
+x_Train = Train.copy()
+x_Train.drop(['default_ind'], axis=1, inplace=True)
+x_Test = Test.copy()
+x_Test.drop(['default_ind'], axis=1, inplace=True)
+y_Train = Train['default_ind']
+y_Test = Test['default_ind']
+
+from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
+
+import warnings
+warnings.filterwarnings('ignore')
+
+
+# Finaly running the model
+
+xyz=[]
+classifiers=['Logistic Regression','KNN', 'Random Forest', 'Naive Bayes']
+models=[LogisticRegression(),
+        KNeighborsClassifier(n_neighbors=3), 
+        RandomForestClassifier(n_estimators=100), GaussianNB()]
+for i in models:
+    model = i
+    model.fit(x_Train, y_Train)
+    prediction=model.predict(x_Test)
+    xyz.append(metrics.accuracy_score(prediction,y_Test))
+models_dataframe=pd.DataFrame(xyz,index=classifiers)   
+models_dataframe.columns=['Accuracy']
+models_dataframe
+DataFrame.head()
+
+logreg = LogisticRegression()
+logreg.fit(x_Train,y_Train)
+y_pred = logreg.predict(x_Test)
+from sklearn.metrics import confusion_matrix, classification_report
+cm = confusion_matrix(y_Test,y_pred)
+cm
+sns.heatmap(cm , annot=True)
+
+cr = classification_report(y_Test,y_pred)
+print(cr)
+#plotting the roc curve
+from sklearn.metrics import roc_curve
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
+y_pred_prob = logreg.predict_proba(x_Test)[:,1]
+fpr,tpr,threshold = roc_curve(y_Test,y_pred_prob)
+plt.xlabel('Fpr')
+plt.ylabel('Tpr')
+plt.plot([0,1],[0,1], 'k--')
+plt.plot(fpr,tpr,label = 'logistic regression')
+
+
+Thank you
+
+
+
+
+
+
+
+
+
+
+
